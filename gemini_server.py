@@ -17,7 +17,7 @@ def ask_ai():
     user_text = "1+1" # 假設這裡是辨識出的文字
     
     # 2. 呼叫 Gemini
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-2.5-flash')
     response = model.generate_content(user_text)
     
     # 3. 將回答轉成語音
