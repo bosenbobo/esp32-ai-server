@@ -5,28 +5,51 @@ from gtts import gTTS
 
 app = Flask(__name__)
 
-# 從環境變數讀取 API Key (這是雲端部署的標準作法)
+# 從環境變數讀取 API Key (部署在 Render 時，請記得在後台設定這個環境變數)
 api_key = os.environ.get("GEMINI_API_KEY")
 genai.configure(api_key=api_key)
 
 @app.route('/ask', methods=['POST'])
 def ask_ai():
-    # 1. 取得 ESP32 傳來的錄音內容
-    audio_data = request.data
-    # 這裡你可以加上轉錄邏輯 (Speech-to-Text)，目前我們先簡化
-    user_text = "1+1" # 假設這裡是辨識出的文字
-    
-    # 2. 呼叫 Gemini
-    model = genai.GenerativeModel('gemini-2.5-flash')
-    response = model.generate_content(user_text)
-    
-    # 3. 將回答轉成語音
-    tts = gTTS(text=response.text, lang='zh-tw')
-    tts.save("output.mp3")
-    
-    return send_file("output.mp3", mimetype="audio/mpeg")
+    try:
+        # ✨ 正確解析 ESP32 傳過來的 JSON 文字資料
+        data = request.get_json()
+        if not data:
+            return {"error": "未收到有效的 JSON 資料"}, 400
+            
+        # 取得 ESP32 傳過來的文字（例如："有什麼需要服務" 或 "午安"）
+        user_text = data.get("text", "")
+        print(f"📥 收到來自 ESP32 的文字請求: {user_text}")
+        
+        if not user_text:
+            return {"error": "請求中缺乏 text 欄位"}, 400
+
+        # ✨ 加入嚴格的字數限制提示詞，防止語音檔太大導致 ESP32 下載超時當機
+        prompt = f"請用繁體中文回答以下問題，語氣要溫暖自然，且字數『嚴格限制在 30 字以內』：{user_text}"
+        
+        # 2. 呼叫 Gemini 模型進行動態思考
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(prompt)
+        
+        ai_reply = response.text.strip()
+        print(f"🤖 Gemini 生成的回應: {ai_reply}")
+        
+        # 3. 將 AI 動態生成的文字轉成語音檔 (繁體中文台灣音調)
+        tts = gTTS(text=ai_reply, lang='zh-tw')
+        tts.save("output.mp3")
+        
+        print("💾 語音轉檔完成，準備發送給 ESP32...")
+        return send_file("output.mp3", mimetype="audio/mpeg")
+        
+    except Exception as e:
+        print(f"❌ 後端發生錯誤: {str(e)}")
+        return {"error": str(e)}, 500
+
+# ✨ 新增首頁檢查路由：方便直接用瀏覽器點網址測試伺服器是否活著
+@app.route('/', methods=['GET'])
+def index():
+    return {"status": "AI語音伺服器正完美運行中！大腦已成功解鎖！"}
 
 if __name__ == "__main__":
-    # 雲端平台會自動分配 PORT，如果不指定則用 5000
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
