@@ -1,4 +1,5 @@
-flask
+Flask
 google-generativeai
 gtts
 gunicorn
+SpeechRecognition
