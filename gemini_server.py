@@ -50,6 +50,9 @@ def ask_ai():
 def index():
     return {"status": "AI語音伺服器正完美運行中！大腦已成功解鎖！"}
 
+# 🌟 修正重點：外放主機與通訊埠設定，讓 Render 雲端平台與 gunicorn 更好辨識與載入
+host = '0.0.0.0'
+port = int(os.environ.get("PORT", 5000))
+
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host=host, port=port)
