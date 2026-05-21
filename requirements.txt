@@ -1,8 +1,4 @@
-Flask==3.1.3
-    google-generativeai==0.8.6
-    gTTS==2.5.4
-    gunicorn==23.0.0
-    ```
-  
-  
-    滾動到最下方，點擊綠色的 **「Commit changes...」**，然後再點一次 **「Commit changes」** 確認儲存。
+flask
+google-generativeai
+gtts
+gunicorn
